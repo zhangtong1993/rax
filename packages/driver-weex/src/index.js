@@ -137,11 +137,19 @@ const Driver = {
 
   addEventListener(node, eventName, eventHandler, props) {
     let params = props[eventName + 'EventParams'];
-    return node.addEvent(eventName, eventHandler, params);
+    if (node.addEventListener) {
+      return node.addEventListener(eventName, eventHandler, params);
+    } else {
+      return node.addEvent(eventName, eventHandler, params);
+    }
   },
 
   removeEventListener(node, eventName, eventHandler) {
-    return node.removeEvent(eventName, eventHandler);
+    if (node.removeEventListener) {
+      return node.removeEventListener(eventName, eventHandler);
+    } else {
+      return node.removeEvent(eventName, eventHandler);
+    }
   },
 
   removeAttribute(node, propKey, propValue) {
@@ -149,7 +157,11 @@ const Driver = {
       nodeMaps[propValue] = null;
     }
     // Weex native will crash when pass null value
-    return node.setAttr(propKey, undefined, false);
+    if (node.setAttribute) {
+      return node.setAttribute(propKey, undefined, false);
+    } else {
+      return node.setAttr(propKey, undefined, false);
+    }
   },
 
   setAttribute(node, propKey, propValue) {
@@ -164,7 +176,11 @@ const Driver = {
       });
     }
 
-    return node.setAttr(propKey, propValue, false);
+    if (node.setAttribute) {
+      return node.setAttribute(propKey, propValue, false);
+    } else {
+      return node.setAttr(propKey, propValue, false);
+    }
   },
 
   setStyles(node, styles) {
