@@ -26,7 +26,7 @@ class ClientPlugin {
         const shellJsPath = path.resolve(pathConfig.appBuild, './shells.js');
         const component = require(shellJsPath).default;
 
-        this.AppShellTemplate = renderer.renderToString(createElement(component, {}, createElement('div', { id: 'root' })));
+        this.AppShellTemplate = renderer.renderToString(createElement(component, {}, createElement('div', { id: 'root-page' })));
         fs.unlinkSync(shellJsPath);
         callback();
       });
@@ -38,7 +38,7 @@ class ClientPlugin {
           if (mod.resource && mod.resource.indexOf('public/index.html') > -1) {
             mod._source._value = mod._source._value.replace(
               '<div id="root"></div>',
-              `<div id="root-shell">${this.AppShellTemplate}</div>`
+              `<div id="root">${this.AppShellTemplate}</div>`
             );
           }
         });
