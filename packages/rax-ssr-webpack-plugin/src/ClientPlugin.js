@@ -40,6 +40,13 @@ class ClientPlugin {
               '<div id="root"></div>',
               `<div id="root">${this.AppShellTemplate}</div>`
             );
+            // 如果开启 Service Worker
+            if (true) {
+              mod._source._value = mod._source._value.replace(
+                '</body>',
+                '<script>!function(){var e=document.createElement("script");e.src="/regSW.js?"+Date.now(),e.async=!0,e.type="text/javascript",e.crossOrigin="anonymous",document.head.insertBefore(e,document.head.firstChild)}();</script></body>'
+              );
+            }
           }
         });
       });

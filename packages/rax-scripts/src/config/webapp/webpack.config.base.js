@@ -8,6 +8,7 @@ const babelConfig = require('../babel.config');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 var ClientPlugin = require('rax-ssr-webpack-plugin/src/ClientPlugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 babelConfig.presets.push([
   require.resolve('@babel/preset-react'), {
@@ -27,6 +28,7 @@ module.exports = {
 
   plugins: [
     new ClientPlugin({ pathConfig, template: pathConfig.appHtml }),
+    new CopyWebpackPlugin([{ from: pathConfig.appSrc + '/sw.js' }, { from: __dirname + '/regSW.js' }]),
     // Generates an `index.html` file with the <script> injected.
     new HtmlWebpackPlugin({
       inject: true,
