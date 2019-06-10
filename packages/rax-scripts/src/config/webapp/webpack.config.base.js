@@ -28,7 +28,7 @@ module.exports = {
 
   plugins: [
     new ClientPlugin({ pathConfig, template: pathConfig.appHtml }),
-    new CopyWebpackPlugin([{ from: pathConfig.appSrc + '/sw.js' }, { from: __dirname + '/regSW.js' }]),
+    new CopyWebpackPlugin([{ from: __dirname + '/regSW.js' }]),
     // Generates an `index.html` file with the <script> injected.
     new HtmlWebpackPlugin({
       inject: true,

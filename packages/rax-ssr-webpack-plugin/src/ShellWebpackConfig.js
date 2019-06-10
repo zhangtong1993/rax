@@ -25,7 +25,7 @@ module.exports = function getShellConfig(pathConfig) {
     target: 'node',
     mode: 'development',
     entry: {
-      shells: path.resolve(pathConfig.appSrc, './shells/index'),
+      shell: path.resolve(pathConfig.appSrc, './shell/index'),
     },
     output: {
       path: pathConfig.appBuild,

@@ -39,6 +39,7 @@ module.exports = {
     filename: 'js/[name].js',
     // This is the URL that app is served from. We use "/" in development.
     publicPath: publicPath,
+    chunkFilename: 'pages.[name].js'
   },
 
   module: {
