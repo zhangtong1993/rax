@@ -49,12 +49,13 @@ function AliveRouter(props) {
     return createElement(routerConfig.InitialComponent, props);
   }
 
-  const pageWithTabBar = !!items.find(item => item.pagePath === history.location.pathname);
+  const isKeepAlivePage = !!paths.find(pathItem => pathItem === history.location.pathname);
+  const isTabBarPageTabBar = !!items.find(item => item.pagePath === history.location.pathname);
 
   if (isFirstTimeRender && routerConfig.InitialComponent) {
     isFirstTimeRender = false;
     const getInitialComponent = routerConfig.InitialComponent;
-    if (!pageWithTabBar) {
+    if (!isTabBarPageTabBar) {
       return createElement(getInitialComponent(), props);
     } else {
       pages[history.location.pathname] = createElement(getInitialComponent(), props);
@@ -62,36 +63,39 @@ function AliveRouter(props) {
     }
   }
 
+  const pageStyle = { ...styles.container, display: isKeepAlivePage ? 'block' : 'none' };
+  if (!isTabBarPageTabBar) {
+    pageStyle.bottom = 0;
+  }
+
   return (
     <Fragment>
-      {pageWithTabBar ? null : <Router />}
-
-      <div style={{ ...styles.container, display: pageWithTabBar ? 'block' : 'none' }}>
-
-        {items.map((item) => {
-          const route = routes.find(it => it.path === item.pagePath);
+      {isKeepAlivePage ? null : <Router />}
+      <div style={pageStyle}>
+        {paths.map((pathItem) => {
+          const route = routes.find(it => it.path === pathItem);
           const pathMatched = route.regexp.test(history.location.pathname);
           const pageComponent = pages[route.path] || null;
           if (pathMatched && !pageComponent) activateComponent(route);
-          return <div style={[styles.page, { display: pathMatched ? 'block' : 'none' }]}>{pageComponent}</div>;
+          return <div style={{ ...styles.page, display: pathMatched ? 'block' : 'none' }}>{pageComponent}</div>;
         })}
+      </div>
 
-        <div style={styles.tabBar}>
-          {items.map((item) => {
-            const currentPath = history.location.pathname;
-            const selected = currentPath === item.pagePath;
+      <div style={{ ...styles.tabBar, display: isTabBarPageTabBar ? 'flex' : 'none', backgroundColor }}>
+        {items.map((item) => {
+          const currentPath = history.location.pathname;
+          const selected = currentPath === item.pagePath;
 
-            return (
-              <div style={[styles.tabBarItem, { backgroundColor }]} onClick={() => {
-                history.push(item.pagePath);
-              }}>
-                <img style={{ ...styles.tabBarItem_img, display: selected && item.activeIcon ? 'block' : 'none' }} src={item.activeIcon} />
-                <img style={{ ...styles.tabBarItem_img, display: !selected && item.icon ? 'block' : 'none' }} src={item.icon} />
-                <span style={[styles.tabBarItem_txt, { color: selected ? selectedColor : textColor }]}>{item.name}</span>
-              </div>
-            );
-          })}
-        </div>
+          return (
+            <div style={styles.tabBarItem} onClick={() => {
+              history.push(item.pagePath);
+            }}>
+              <img style={{ ...styles.tabBarItem_img, display: selected && item.activeIcon ? 'block' : 'none' }} src={item.activeIcon} />
+              <img style={{ ...styles.tabBarItem_img, display: !selected && item.icon ? 'block' : 'none' }} src={item.icon} />
+              <span style={{ ...styles.tabBarItem_txt, color: selected ? selectedColor : textColor }}>{item.name}</span>
+            </div>
+          );
+        })}
       </div>
     </Fragment>
   );
