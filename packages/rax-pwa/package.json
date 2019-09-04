@@ -1,6 +1,6 @@
 {
   "name": "rax-pwa",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Rax pwa templates",
   "license": "BSD-3-Clause",
   "main": "lib/index.js",
@@ -22,6 +22,7 @@
     "history": "^4.9.0",
     "path-to-regexp": "^3.0.0",
     "rax-server-renderer": "^1.0.1",
-    "rax-use-router": "^2.0.0"
+    "rax-use-router": "^2.0.0",
+    "universal-env": "^2.0.0"
   }
 }

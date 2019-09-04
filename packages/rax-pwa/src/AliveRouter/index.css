@@ -1,0 +1,45 @@
+.container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 98rpx;
+}
+
+.page {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.tabBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 98rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1rpx solid #eee;
+  background-color: #fff;
+}
+
+.tabBarItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.tabBarItem_txt {
+  font-size: 24rpx;
+}
+
+.tabBarItem_img {
+  margin-bottom: 8rpx;
+  width: 30rpx;
+  height: 30rpx;
+}
