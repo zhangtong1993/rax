@@ -1,4 +1,5 @@
 import { render, createElement, useState, useEffect } from 'rax';
+import { Wrapper } from 'rax-pwa';
 import { isWeex, isWeb } from 'universal-env';
 import { useRouter } from 'rax-use-router';
 import { createMemoryHistory, createHashHistory, createBrowserHistory } from 'history';
@@ -56,6 +57,18 @@ function App(props) {
       // Early return null if initialProps were not get.
       return null;
     }
+
+    if (isWeb) {
+      return createElement(
+        Wrapper,
+        Object.assign(
+          {},
+          props,
+          pageInitialProps[component.__path]
+        )
+      );
+    }
+
     return createElement(component, Object.assign({}, props, pageInitialProps[component.__path]));
   }
 }
@@ -68,7 +81,7 @@ export default function runApp(appConfig) {
   if (launched) throw new Error('Error: runApp can only be called once.');
   launched = true;
 
-  const { routes, shell, hydrate = false } = appConfig;
+  const { hydrate = false, routes, shell, tabBar } = appConfig;
 
   if (isWeex) {
     history = createMemoryHistory();
@@ -87,6 +100,7 @@ export default function runApp(appConfig) {
       let appInstance = createElement(App, {
         history,
         routes,
+        tabBar,
         InitialComponent: _initialComponent
       });
 
