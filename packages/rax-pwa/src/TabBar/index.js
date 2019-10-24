@@ -1,20 +1,24 @@
 import { render, createElement, useState, useEffect } from 'rax';
-import View from 'rax-view';
+
+import Image from 'rax-image';
 import Text from 'rax-text';
+import View from 'rax-view';
 
 import styles from './index.css';
 
 export default function TabBar(props) {
-  console.log(styles);
-  console.log(props);
-  const { backgroundColor, items, selectedColor, textColor } = props;
+  const {
+    backgroundColor,
+    items,
+    selectedColor,
+    textColor,
+    _history, _pathname
+  } = props;
 
   return (
-    <div style={{ ...styles.tabBar, backgroundColor }}>
+    <View style={{ ...styles.tabBar, backgroundColor }}>
       {items.map((item, index) => {
-        const currentPath = '/';
-        const selected = currentPath === item.pagePath;
-
+        const selected = item.pagePath === _pathname;
         const itemTextColor = item.textColor || textColor;
         const itemSelectedColor = item.selectedColor || selectedColor;
 
@@ -23,14 +27,29 @@ export default function TabBar(props) {
             key={`tab-${index}`}
             style={styles.tabBarItem}
             onClick={() => {
-              history.push(item.pagePath);
+              _history.push(item.pagePath);
             }}>
-            <img style={{ ...styles.tabBarItem_img, display: selected && item.activeIcon ? 'block' : 'none' }} src={item.activeIcon} />
-            <img style={{ ...styles.tabBarItem_img, display: !selected && item.icon ? 'block' : 'none' }} src={item.icon} />
-            <Text style={{ ...styles.tabBarItem_txt, color: selected ? itemSelectedColor : itemTextColor }} > {item.name}</Text>
+            <Image
+              style={{
+                ...styles.tabBarItem_img,
+                display: selected && item.activeIcon ? 'block' : 'none'
+              }}
+              source={{ uri: item.activeIcon }} />
+            <Image
+              style={{
+                ...styles.tabBarItem_img,
+                display: !selected && item.icon ? 'block' : 'none'
+              }}
+              source={{ uri: item.icon }} />
+            <Text
+              style={{
+                ...styles.tabBarItem_txt,
+                color: selected ? itemSelectedColor : itemTextColor
+              }}
+            >{item.name}</Text>
           </View>
         );
       })}
-    </div >
+    </View>
   );
 }

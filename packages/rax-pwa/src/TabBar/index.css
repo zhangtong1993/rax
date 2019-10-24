@@ -5,6 +5,7 @@
   bottom: 0;
   height: 98rpx;
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   border: 1rpx solid #eee;
