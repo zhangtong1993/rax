@@ -1,24 +1,23 @@
-import { render, createElement, useState, useEffect } from 'rax';
-
+import { createElement } from 'rax';
 import Image from 'rax-image';
 import Text from 'rax-text';
 import View from 'rax-view';
-
 import styles from './index.css';
 
 export default function TabBar(props) {
   const {
-    backgroundColor,
-    items,
-    selectedColor,
-    textColor,
-    _history, _pathname
+    backgroundColor = '#fff',
+    history,
+    items = [],
+    pathname,
+    selectedColor = '#333',
+    textColor = '#666'
   } = props;
 
   return (
     <View style={{ ...styles.tabBar, backgroundColor }}>
       {items.map((item, index) => {
-        const selected = item.pagePath === _pathname;
+        const selected = item.pagePath === pathname;
         const itemTextColor = item.textColor || textColor;
         const itemSelectedColor = item.selectedColor || selectedColor;
 
@@ -27,7 +26,7 @@ export default function TabBar(props) {
             key={`tab-${index}`}
             style={styles.tabBarItem}
             onClick={() => {
-              _history.push(item.pagePath);
+              history.push(item.pagePath);
             }}>
             <Image
               style={{

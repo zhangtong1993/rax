@@ -10,6 +10,7 @@ const INITIAL_DATA_FROM_SSR = '__INITIAL_DATA__';
 const SHELL_DATA = 'shellData';
 
 let history;
+let appConfig;
 let launched = false;
 const initialDataFromSSR = global[INITIAL_DATA_FROM_SSR];
 
@@ -62,7 +63,10 @@ function App(props) {
       return createElement(
         Wrapper,
         Object.assign(
-          {},
+          {
+            _appConfig: appConfig,
+            _component: component,
+          },
           props,
           pageInitialProps[component.__path]
         )
@@ -77,11 +81,11 @@ function isNullableComponent(component) {
   return !component || Array.isArray(component) && component.length === 0;
 }
 
-export default function runApp(appConfig) {
+export default function runApp(config) {
   if (launched) throw new Error('Error: runApp can only be called once.');
   launched = true;
-
-  const { hydrate = false, routes, shell, tabBar } = appConfig;
+  appConfig = config;
+  const { hydrate = false, routes, shell } = appConfig;
 
   if (isWeex) {
     history = createMemoryHistory();
@@ -100,7 +104,6 @@ export default function runApp(appConfig) {
       let appInstance = createElement(App, {
         history,
         routes,
-        tabBar,
         InitialComponent: _initialComponent
       });
 
