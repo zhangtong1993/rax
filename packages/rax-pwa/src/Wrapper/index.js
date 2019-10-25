@@ -1,9 +1,26 @@
 import { createElement, Fragment, useState, useEffect } from 'rax';
 import View from 'rax-view';
-import Text from 'rax-text';
 import TabBar from '../TabBar/index';
 
-let updateComponentTrigger = () => { };
+import styles from './index.css';
+
+let updatePageTrigger = () => { };
+
+const alivePages = [];
+const alivePagesCache = {};
+
+const activatePageComponent = (route, pageProps, maxAlivePageNum) => {
+  route.component()
+    .then(fn => fn())
+    .then((Page) => {
+      alivePagesCache[route.path] = createElement(Page, pageProps);
+      // remove redundance page cache
+      if (Object.keys(alivePagesCache).length > maxAlivePageNum) {
+        delete alivePagesCache[Object.keys(alivePagesCache)[0]];
+      }
+      updatePageTrigger(Date.now());
+    });
+};
 
 export default function Wrapper(props) {
   console.log(props);
@@ -11,6 +28,7 @@ export default function Wrapper(props) {
   const { maxAlivePageNum = 3, tabBar } = _appConfig;
 
   const [updateTemp, setUpdateTemp] = useState(null);
+  updatePageTrigger = setUpdateTemp;
 
   const Component = _component;
   const currentPathname = history.location.pathname;
@@ -31,22 +49,45 @@ export default function Wrapper(props) {
     }
   });
 
-  updateComponentTrigger = setUpdateTemp;
-
-  // alive page use div other use component
-
   useEffect(() => {
     history.listen(() => {
-      updateComponentTrigger(Date.now());
+      updatePageTrigger(Date.now());
     });
+    // get alive page list
+    routes.forEach((route) => {
+      if (route.keepAlive) {
+        alivePages.push(route);
+      }
+    });
+    updatePageTrigger(Date.now());
   }, []);
 
   return (
     <Fragment>
       {isAlivePage ? null : <Component {...pageProps} />}
 
-      <View style={{ display: isAlivePage ? 'block' : 'none' }}>
-        <Text >Welcome to Your Rax App</Text>
+      <View
+        style={{
+          ...styles.container,
+          display: isAlivePage ? 'block' : 'none'
+        }}
+      >
+        {alivePages.map((alivePage, index) => {
+          const alivePageRoute = routes.find(it => it.path === alivePage.path);
+          const isCurrentPage = alivePageRoute.path === currentPage.path;
+          const alivePageComponent = alivePagesCache[alivePageRoute.path] || null;
+          if (isCurrentPage && !alivePageComponent) activatePageComponent(alivePageRoute, pageProps, maxAlivePageNum);
+          return (
+            <View
+              key={`alivePage${index}`}
+              style={{
+                ...styles.alivePage,
+                display: isCurrentPage ? 'block' : 'none'
+              }}>
+              {alivePageComponent}
+            </View>
+          );
+        })}
       </View>
 
       {showTabBar ? (

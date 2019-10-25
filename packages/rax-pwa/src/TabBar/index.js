@@ -6,7 +6,7 @@ import styles from './index.css';
 
 export default function TabBar(props) {
   const {
-    backgroundColor = '#fff',
+    backgroundColor = '#FFF',
     history,
     items = [],
     pathname,
