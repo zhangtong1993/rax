@@ -1,4 +1,4 @@
-import { createElement, Fragment, useState, useEffect } from 'rax';
+import { createElement, Fragment, useEffect, useState } from 'rax';
 import View from 'rax-view';
 import TabBar from '../TabBar/index';
 
@@ -13,7 +13,7 @@ const activatePageComponent = (route, pageProps, maxAlivePageNum) => {
   route.component()
     .then(fn => fn())
     .then((Page) => {
-      alivePagesCache[route.path] = createElement(Page, pageProps);
+      alivePagesCache[route.path] = <Page {...pageProps} />;
       // remove redundance page cache
       if (Object.keys(alivePagesCache).length > maxAlivePageNum) {
         delete alivePagesCache[Object.keys(alivePagesCache)[0]];
@@ -23,7 +23,6 @@ const activatePageComponent = (route, pageProps, maxAlivePageNum) => {
 };
 
 export default function Wrapper(props) {
-  console.log(props);
   const { history, routes, _appConfig, _component } = props;
   const { maxAlivePageNum = 3, tabBar } = _appConfig;
 
@@ -42,12 +41,49 @@ export default function Wrapper(props) {
     && tabBar.items.find(item => item.pagePath === currentPage.path);
   const isAlivePage = currentPage.keepAlive;
 
+  // props to page component
   const pageProps = {};
   Object.keys(props).forEach((key) => {
     if (key !== '_appConfig' && key !== '_component') {
       pageProps[key] = props[key];
     }
   });
+
+  // preload({source: 'pages/Home/index'});
+  // preload({href: '//xxx.com/font.woff', as: 'font', crossorigin: true});
+  pageProps.preload = (config) => {
+    if (config.source) {
+      const targetRoute = routes.find(route => route.source === config.source);
+      targetRoute && targetRoute.component();
+    } else {
+      const linkElement = document.createElement('link');
+      linkElement.rel = 'preload';
+      linkElement.as = config.as;
+      linkElement.href = config.href;
+      config.crossorigin && (linkElement.crossorigin = true);
+      document.head.appendChild(linkElement);
+    }
+  };
+
+  // rerender({source: 'pages/Home/index'});
+  // rerender({href:'https://m.taobao.com'});
+  pageProps.prerender = config => {
+    if (config.source) {
+      const targetRoute = routes.find(route => route.source === config.source);
+      if (targetRoute) {
+        if (targetRoute.keepAlive) {
+          activatePageComponent(targetRoute, pageProps, maxAlivePageNum);
+        } else {
+          targetRoute.component();
+        }
+      }
+    } else {
+      const linkElement = document.createElement('link');
+      linkElement.rel = 'prerender';
+      linkElement.href = config.href;
+      document.head.appendChild(linkElement);
+    }
+  };
 
   useEffect(() => {
     history.listen(() => {
@@ -59,7 +95,10 @@ export default function Wrapper(props) {
         alivePages.push(route);
       }
     });
-    updatePageTrigger(Date.now());
+    // if current page is alive page, need update routes.
+    if (isAlivePage) {
+      updatePageTrigger(Date.now());
+    }
   }, []);
 
   return (
@@ -73,7 +112,7 @@ export default function Wrapper(props) {
         }}
       >
         {alivePages.map((alivePage, index) => {
-          const alivePageRoute = routes.find(it => it.path === alivePage.path);
+          const alivePageRoute = routes.find(route => route.path === alivePage.path);
           const isCurrentPage = alivePageRoute.path === currentPage.path;
           const alivePageComponent = alivePagesCache[alivePageRoute.path] || null;
           if (isCurrentPage && !alivePageComponent) activatePageComponent(alivePageRoute, pageProps, maxAlivePageNum);
