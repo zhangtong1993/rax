@@ -16,6 +16,7 @@
     "rax": "^1.0.0"
   },
   "devDependencies": {
+    "history": "^4.10.1",
     "rax": "^1.0.0",
     "rax-test-renderer": "^1.0.0"
   },

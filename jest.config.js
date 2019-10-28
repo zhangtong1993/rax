@@ -12,7 +12,7 @@ module.exports = {
   ],
   'setupTestFrameworkScriptFile': './scripts/jest/setupTests.js',
   'moduleNameMapper': {
-    '\\.(css|less|scss|sss|styl)$': '<rootDir>/node_modules/jest-css-modules'
+    '\\.css$': '<rootDir>/scripts/jest/styleMock.js',
   },
   'testPathIgnorePatterns': [
     '/node_modules/',
