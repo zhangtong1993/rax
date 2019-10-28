@@ -102,6 +102,12 @@ export default function runApp(config) {
     .then((initialComponent) => {
       _initialComponent = initialComponent;
       let appInstance = createElement(App, {
+        preload: () => {
+          // Only works in Web project for now.
+        },
+        prerender: () => {
+          // Only works in Web project for now.
+        },
         history,
         routes,
         InitialComponent: _initialComponent
