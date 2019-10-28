@@ -14,7 +14,7 @@ const activatePageComponent = (route, pageProps, maxAlivePageNum) => {
     .then(fn => fn())
     .then((Page) => {
       alivePagesCache[route.path] = <Page {...pageProps} />;
-      // remove redundance page cache
+      // Prevent cache from being too large
       if (Object.keys(alivePagesCache).length > maxAlivePageNum) {
         delete alivePagesCache[Object.keys(alivePagesCache)[0]];
       }
@@ -34,14 +34,28 @@ export default function Wrapper(props) {
   const currentPage = routes.find(route => route.path === currentPathname);
 
   const showTabBar =
-    // have tabBar config
-    typeof tabBar === 'object'
-    && Array.isArray(tabBar.items)
-    // current page need show tabBar
+    // Have tabBar config
+    typeof tabBar === 'object' && Array.isArray(tabBar.items)
+    // Current page need show tabBar
     && tabBar.items.find(item => item.pagePath === currentPage.path);
   const isAlivePage = currentPage.keepAlive;
+  useEffect(() => {
+    history.listen(() => {
+      updatePageTrigger(Date.now());
+    });
+    // Use display control alive page, need get alive page list.
+    routes.forEach((route) => {
+      if (route.keepAlive) {
+        alivePages.push(route);
+      }
+    });
+    // If current page is alive page, need update routes.
+    if (isAlivePage) {
+      updatePageTrigger(Date.now());
+    }
+  }, []);
 
-  // props to page component
+  // Props to page component
   const pageProps = {};
   Object.keys(props).forEach((key) => {
     if (key !== '_appConfig' && key !== '_component') {
@@ -49,11 +63,11 @@ export default function Wrapper(props) {
     }
   });
 
-  // preload({source: 'pages/Home/index'});
+  // preload({path: 'pages/Home/index'});
   // preload({href: '//xxx.com/font.woff', as: 'font', crossorigin: true});
   pageProps.preload = (config) => {
-    if (config.source) {
-      const targetRoute = routes.find(route => route.source === config.source);
+    if (config.path) {
+      const targetRoute = routes.find(route => route.path === config.path);
       targetRoute && targetRoute.component();
     } else {
       const linkElement = document.createElement('link');
@@ -65,11 +79,11 @@ export default function Wrapper(props) {
     }
   };
 
-  // rerender({source: 'pages/Home/index'});
+  // rerender({path: 'pages/Home/index'});
   // rerender({href:'https://m.taobao.com'});
   pageProps.prerender = config => {
-    if (config.source) {
-      const targetRoute = routes.find(route => route.source === config.source);
+    if (config.path) {
+      const targetRoute = routes.find(route => route.path === config.path);
       if (targetRoute) {
         if (targetRoute.keepAlive) {
           activatePageComponent(targetRoute, pageProps, maxAlivePageNum);
@@ -84,22 +98,6 @@ export default function Wrapper(props) {
       document.head.appendChild(linkElement);
     }
   };
-
-  useEffect(() => {
-    history.listen(() => {
-      updatePageTrigger(Date.now());
-    });
-    // get alive page list
-    routes.forEach((route) => {
-      if (route.keepAlive) {
-        alivePages.push(route);
-      }
-    });
-    // if current page is alive page, need update routes.
-    if (isAlivePage) {
-      updatePageTrigger(Date.now());
-    }
-  }, []);
 
   return (
     <Fragment>

@@ -1,7 +1,5 @@
-global.callNative = null;
 import { createElement } from 'rax';
 import renderer from 'rax-test-renderer';
-import View from 'rax-view';
 import { createMemoryHistory } from 'history';
 import TabBar from '../../lib/TabBar/index';
 
