@@ -1,8 +1,7 @@
 import Host from './host';
-import { flushEffect, schedule, flushLayout } from './scheduler';
+import { flushEffect, schedule } from './scheduler';
 import invokeFunctionsWithContext from '../invokeFunctionsWithContext';
-import { INSTANCE, INTERNAL, RENDERED_COMPONENT } from '../constant';
-import performInSandbox from './performInSandbox';
+import { INTERNAL, RENDERED_COMPONENT } from '../constant';
 
 // Dirty components store
 let dirtyComponents = [];
@@ -52,16 +51,14 @@ function runUpdate(component) {
   let nextUnmaskedContext = internal.__penddingContext || prevUnmaskedContext;
   internal.__penddingContext = undefined;
 
-  const instance = internal[INSTANCE];
-    performInSandbox(() => {
-      internal.__updateComponent(
-        prevElement,
-        prevElement,
-        prevUnmaskedContext,
-        nextUnmaskedContext
-      );
-    }, instance);
-  performInSandbox(flushLayout, instance);
+  if (getPendingStateQueue(internal) || internal.__isPendingForceUpdate) {
+    internal.__updateComponent(
+      prevElement,
+      prevElement,
+      prevUnmaskedContext,
+      nextUnmaskedContext
+    );
+  }
 
   invokeFunctionsWithContext(callbacks, component);
 
