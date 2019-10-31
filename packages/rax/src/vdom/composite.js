@@ -6,45 +6,47 @@ import instantiateComponent, { throwInvalidComponentError } from './instantiateC
 import shouldUpdateComponent from './shouldUpdateComponent';
 import shallowEqual from './shallowEqual';
 import BaseComponent from './base';
+import getPrevSiblingNativeNode from './getPrevSiblingNativeNode';
+import performInSandbox, { handleError } from './performInSandbox';
 import toArray from '../toArray';
-import { scheduler } from './scheduler';
+import { scheduleLayout } from './scheduler';
 import { isFunction, isArray } from '../types';
 import assign from '../assign';
 import { INSTANCE, INTERNAL, RENDERED_COMPONENT } from '../constant';
-import getPrevSiblingNativeNode from './getPrevSiblingNativeNode';
+// import getPrevSiblingNativeNode from './getPrevSiblingNativeNode';
 import invokeFunctionsWithContext from '../invokeFunctionsWithContext';
-import getNearestParent from './getNearestParent';
+// import getNearestParent from './getNearestParent';
 import validateChildKeys from '../validateChildKeys';
 
-function performInSandbox(fn, instance, callback) {
-  try {
-    return fn();
-  } catch (e) {
-    if (callback) {
-      callback(e);
-    } else {
-      handleError(instance, e);
-    }
-  }
-}
+// function performInSandbox(fn, instance, callback) {
+//   try {
+//     return fn();
+//   } catch (e) {
+//     if (callback) {
+//       callback(e);
+//     } else {
+//       handleError(instance, e);
+//     }
+//   }
+// }
 
-function handleError(instance, error) {
-  let boundary = getNearestParent(instance, parent => parent.componentDidCatch);
+// function handleError(instance, error) {
+//   let boundary = getNearestParent(instance, parent => parent.componentDidCatch);
 
-  if (boundary) {
-    // Should not attempt to recover an unmounting error boundary
-    const boundaryInternal = boundary[INTERNAL];
-    if (boundaryInternal) {
-      let callbackQueue = boundaryInternal.__pendingCallbacks || (boundaryInternal.__pendingCallbacks = []);
-      callbackQueue.push(() => boundary.componentDidCatch(error));
-    }
-  } else {
-    // Do not break when error happens
-    scheduler(() => {
-      throw error;
-    }, 0);
-  }
-}
+//   if (boundary) {
+//     // Should not attempt to recover an unmounting error boundary
+//     const boundaryInternal = boundary[INTERNAL];
+//     if (boundaryInternal) {
+//       let callbackQueue = boundaryInternal.__pendingCallbacks || (boundaryInternal.__pendingCallbacks = []);
+//       callbackQueue.push(() => boundary.componentDidCatch(error));
+//     }
+//   } else {
+//     // Do not break when error happens
+//     scheduler(() => {
+//       throw error;
+//     }, 0);
+//   }
+// }
 
 let measureLifeCycle;
 if (process.env.NODE_ENV !== 'production') {
@@ -168,15 +170,17 @@ class CompositeComponent extends BaseComponent {
     }
 
     if (instance.componentDidMount) {
-      performInSandbox(() => {
-        if (process.env.NODE_ENV !== 'production') {
-          measureLifeCycle(() => {
+      scheduleLayout(() => {
+        performInSandbox(() => {
+          if (process.env.NODE_ENV !== 'production') {
+            measureLifeCycle(() => {
+              instance.componentDidMount();
+            }, this._mountID, 'componentDidMount');
+          } else {
             instance.componentDidMount();
-          }, this._mountID, 'componentDidMount');
-        } else {
-          instance.componentDidMount();
-        }
-      }, instance);
+          }
+        }, instance);
+      });
     }
 
     // Trigger setState callback in componentWillMount or boundary callback after rendered
@@ -317,9 +321,7 @@ class CompositeComponent extends BaseComponent {
     if (willReceive && instance.componentWillReceiveProps) {
       // Calling this.setState() within componentWillReceiveProps will not trigger an additional render.
       this.__isPendingState = true;
-      performInSandbox(() => {
-        instance.componentWillReceiveProps(nextProps, nextContext);
-      }, instance);
+      instance.componentWillReceiveProps(nextProps, nextContext);
       this.__isPendingState = false;
     }
 
@@ -341,9 +343,7 @@ class CompositeComponent extends BaseComponent {
     // ShouldComponentUpdate is not called when forceUpdate is used
     if (!this.__isPendingForceUpdate) {
       if (instance.shouldComponentUpdate) {
-        shouldUpdate = performInSandbox(() => {
-          return instance.shouldComponentUpdate(nextProps, nextState, nextContext);
-        }, instance);
+        shouldUpdate = instance.shouldComponentUpdate(nextProps, nextState, nextContext);
       } else if (instance.__isPureComponent) {
         // Pure Component
         shouldUpdate = !shallowEqual(prevProps, nextProps) ||
@@ -359,9 +359,7 @@ class CompositeComponent extends BaseComponent {
       // Cannot use this.setState() in componentWillUpdate.
       // If need to update state in response to a prop change, use componentWillReceiveProps instead.
       if (instance.componentWillUpdate) {
-        performInSandbox(() => {
-          instance.componentWillUpdate(nextProps, nextState, nextContext);
-        }, instance);
+        instance.componentWillUpdate(nextProps, nextState, nextContext);
       }
 
       // Replace with next
@@ -374,9 +372,7 @@ class CompositeComponent extends BaseComponent {
       this.__updateRenderedComponent(nextUnmaskedContext);
 
       if (instance.componentDidUpdate) {
-        performInSandbox(() => {
-          instance.componentDidUpdate(prevProps, prevState, prevContext);
-        }, instance);
+        instance.componentDidUpdate(prevProps, prevState, prevContext);
       }
 
       if (process.env.NODE_ENV !== 'production') {
@@ -418,15 +414,13 @@ class CompositeComponent extends BaseComponent {
 
     Host.owner = this;
 
-    performInSandbox(() => {
-      if (process.env.NODE_ENV !== 'production') {
-        measureLifeCycle(() => {
-          nextRenderedElement = instance.render();
-        }, this._mountID, 'render');
-      } else {
+    if (process.env.NODE_ENV !== 'production') {
+      measureLifeCycle(() => {
         nextRenderedElement = instance.render();
-      }
-    }, instance);
+      }, this._mountID, 'render');
+    } else {
+      nextRenderedElement = instance.render();
+    }
 
     Host.owner = null;
 
