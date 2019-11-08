@@ -2,8 +2,6 @@ import { createElement, useEffect, useState, Fragment } from 'rax';
 import View from 'rax-view';
 import TabBar from '../TabBar/index';
 
-import styles from './index.css';
-
 let _updatePageTrigger = () => { };
 
 const alivePages = [];
@@ -110,3 +108,21 @@ export default function Navigation(props) {
     </Fragment>
   );
 }
+
+const styles = {
+  container: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0
+  },
+  alivePage: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    overflowY: 'auto',
+    // For Safari scroll smooth
+    '-webkit-overflow-scrolling': 'touch'
+  }
+};

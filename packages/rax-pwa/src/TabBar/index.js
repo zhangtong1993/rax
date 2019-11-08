@@ -2,7 +2,6 @@ import { createElement, useEffect, useState, Fragment } from 'rax';
 import Image from 'rax-image';
 import Text from 'rax-text';
 import View from 'rax-view';
-import styles from './index.css';
 
 export default function TabBar(props) {
   const [pathname, setPathname] = useState('');
@@ -72,3 +71,37 @@ export default function TabBar(props) {
     </Fragment>
   );
 }
+
+const styles = {
+  tabBar: {
+    position: 'fixed',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '98rpx',
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: '1rpx solid #eee',
+    backgroundColor: '#fff'
+  },
+
+  tabBarItem: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+
+  tabBarItemTxt: {
+    fontSize: '24rpx'
+  },
+
+  tabBarItemImg: {
+    marginBottom: '8rpx',
+    width: '30rpx',
+    height: '30rpx'
+  }
+};
