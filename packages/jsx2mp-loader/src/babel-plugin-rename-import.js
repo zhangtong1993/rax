@@ -89,12 +89,13 @@ module.exports = function visitor({ types: t }, options) {
               }
 
               if (isRaxModule(moduleName)) {
-                let runtimePath = t.stringLiteral(getRuntimeByPlatform(platform.type));
+                let runtimePath = getRuntimeByPlatform(platform.type);
                 if (!disableCopyNpm) {
-                  runtimePath = source(moduleName, nodeModulesPathList, state.cwd);
+                  const rootNpmRelativePath = relative(dirname(distSourcePath), join(outputPath, 'npm'));
+                  runtimePath = './' + join(rootNpmRelativePath, RUNTIME);
                 }
                 path.node.arguments = [
-                  runtimePath
+                  t.stringLiteral(runtimePath)
                 ];
                 return;
               }

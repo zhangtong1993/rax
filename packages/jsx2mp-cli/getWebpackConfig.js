@@ -148,6 +148,9 @@ module.exports = (options = {}) => {
         if (/^@weex-module\//.test(request)) {
           return callback(null, `commonjs2 ${request}`);
         }
+        // if (request === 'rax' || request === 'rax-app') {
+        //   return callback(null, `commonjs2 ${request}`);
+        // }
         callback();
       },
     ],
