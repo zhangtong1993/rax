@@ -25,6 +25,8 @@ module.exports = [
   require('./condition'),
   // Handle render function
   require('./render-function'),
+  // Handle render props
+  require('./render-props'),
   // Parse and generate template.
   require('./template'),
   // Handle function

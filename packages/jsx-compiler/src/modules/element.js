@@ -5,6 +5,7 @@ const createBinding = require('../utils/createBinding');
 const createJSXBinding = require('../utils/createJSXBinding');
 const CodeError = require('../utils/CodeError');
 const DynamicBinding = require('../utils/DynamicBinding');
+const createJSX = require('../utils/createJSX');
 const compiledComponents = require('../compiledComponents');
 const baseComponents = require('../baseComponents');
 const replaceComponentTagName = require('../utils/replaceComponentTagName');
@@ -14,6 +15,7 @@ const ATTR = Symbol('attribute');
 const ELE = Symbol('element');
 const isDirectiveAttr = attr => /^(a:|wx:|x-)/.test(attr);
 const isEventHandlerAttr = propKey => /^on[A-Z]/.test(propKey);
+const isRenderPropsAttr = propKey => /^render[A-Z]/.test(propKey);
 const BINDING_REG = /{{|}}/g;
 
 /**
@@ -35,8 +37,12 @@ function transformTemplate(
   adapter,
   sourceCode,
 ) {
+  let tempId = 0;
+
   const dynamicValues = new DynamicBinding('_d');
   const dynamicEvents = new DynamicBinding('_e');
+
+  const renderPropsList = [];
   function handleJSXExpressionContainer(path) {
     const { parentPath, node } = path;
     if (node.__transformed) return;
@@ -55,6 +61,7 @@ function transformTemplate(
     }
 
     const isEventHandler = isEventHandlerAttr(attributeName);
+    const isRenderProps = isRenderPropsAttr(attributeName);
 
     switch (expression.type) {
       // <div foo={'string'} /> -> <div foo="string" />
@@ -196,6 +203,7 @@ function transformTemplate(
 
       // <tag onClick={() => {}} /> => <tag onClick="_e0" />
       // <tag>{() => {}}</tag> => throw Error
+      // <tag renderXXX={() => {}}> => <template />
       case 'ArrowFunctionExpression':
       case 'FunctionExpression':
         if (type === ELE)
@@ -206,42 +214,60 @@ function transformTemplate(
             'Unsupported Function in JSXElement:',
           );
 
-        if (!isEventHandler)
+        if (!isEventHandler && !isRenderProps) {
           throw new CodeError(
             sourceCode,
             node,
             node.loc,
-            `Only EventHandlers are supported in Mini Program, eg: onClick/onChange, instead of "${attributeName}".`,
+            `Only EventHandlers and renderProps are supported in Mini Program, eg: onClick/onChange/renderCat, instead of "${attributeName}".`,
           );
+        }
         const callExp = expression.body;
         const args = callExp.arguments;
         const { attributes } = parentPath.parentPath.node;
         const fnExpression = t.isCallExpression(callExp) ? callExp.callee : expression;
-        const name = dynamicEvents.add({
-          expression: fnExpression,
-          isDirective,
-        });
-        const formatName = formatEventName(name);
-        if (Array.isArray(args)) {
-          args.forEach((arg, index) => {
-            const transformedArg = transformCallExpressionArg(arg);
-            attributes.push(
-              t.jsxAttribute(
-                t.jsxIdentifier(`data-${formatName}-arg-` + index),
-                t.stringLiteral(
-                  createBinding(
-                    genExpression(transformedArg, {
-                      concise: true,
-                      comments: false,
-                    }),
+
+        if (isEventHandler) {
+          const name = dynamicEvents.add({
+            expression: fnExpression,
+            isDirective,
+          });
+          const formatName = formatEventName(name);
+          if (Array.isArray(args)) {
+            args.forEach((arg, index) => {
+              const transformedArg = transformCallExpressionArg(arg);
+              attributes.push(
+                t.jsxAttribute(
+                  t.jsxIdentifier(`data-${formatName}-arg-` + index),
+                  t.stringLiteral(
+                    createBinding(
+                      genExpression(transformedArg, {
+                        concise: true,
+                        comments: false,
+                      }),
+                    ),
                   ),
                 ),
-              ),
-            );
-          });
+              );
+            });
+          }
+
+          path.replaceWith(t.stringLiteral(name));
         }
 
-        path.replaceWith(t.stringLiteral(name));
+        if (isRenderProps) {
+          const renderPropsName = attributeName.slice(6).toLowerCase();
+          const renderPropsDataName = `${renderPropsName}State__temp${tempId++}`;
+          const JSXElementParentNode = getJSXElementParentPath(parentPath);
+          JSXElementParentNode.node.children = JSXElementParentNode.node.children || [];
+          JSXElementParentNode.node.children.push(createJSX('template', {
+            name:  t.stringLiteral(renderPropsName)
+          }));
+          renderPropsList.push(createJSX('template', {
+            is: t.stringLiteral(renderPropsName),
+            data: t.stringLiteral(createBinding(`...${renderPropsDataName}`))
+          }))
+        }
         break;
 
       // <tag key={this.props.name} key2={a.b} /> => <tag key="{{_d0.name}}" key2="{{_d1.b}}" />
@@ -503,6 +529,26 @@ function transformTemplate(
         }
       },
     },
+    JSXElement: {
+      exit(path) {
+        const { node: {
+          openingElement
+        } } = path;
+        if (openingElement) {
+          if (t.isJSXIdentifier(openingElement.name)
+            && openingElement.name.name === 'block'
+            && openingElement.attributes.find(attr => t.isStringLiteral(attr.value) && attr.value.value === '{{$ready}}')
+          ) {
+            // Insert template define
+            path.node.children = [...renderPropsList, ...path.node.children];
+          } else {
+            path.skip();
+          }
+        } else {
+          path.skip();
+        }
+      }
+    }
   });
 
   return {
@@ -745,6 +791,18 @@ function collectComponentDependentProps(path, attrValue, attrPath, componentDepe
 // _e0 -> e0
 function formatEventName(name) {
   return name.replace('_', '');
+}
+
+/**
+ * get parent path whose node type is JSXElement
+ *
+ * @param {*} path
+ */
+function getJSXElementParentPath(path) {
+  if (t.isJSXElement(path.node) || t.isProgram(path.node)){
+    return path;
+  }
+  return getJSXElementParentPath(path.parentPath);
 }
 
 module.exports = {

@@ -222,6 +222,8 @@ function transformComponents(parsed, options) {
         ) {
           path.replaceWith(createJSX('slot'));
         }
+
+        // 插个眼
       }
     },
   });
